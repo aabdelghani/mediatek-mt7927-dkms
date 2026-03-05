@@ -12,8 +12,12 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+FAIL_COUNT=0
 ok() { echo "OK${1:+ ($1)}"; }
-fail() { echo "FAIL${1:+ ($1)}"; }
+fail() {
+	FAIL_COUNT=$((FAIL_COUNT + 1))
+	echo "FAIL${1:+ ($1)}"
+}
 skip() { echo "SKIP${1:+ ($1)}"; }
 na() { echo "N/A${1:+ ($1)}"; }
 
@@ -387,16 +391,40 @@ check_errors() {
 	local mt_dmesg
 	mt_dmesg="$(echo "$dmesg_out" | grep -iE 'mt76|mt7925|mt7927|mt6639|mt792x' || true)"
 
-	# Look for known bad patterns
+	if [[ -z "$mt_dmesg" ]]; then
+		fail "no mt76 messages in dmesg (driver not loaded?)"
+		return
+	fi
+
+	# Critical: STA insertion failure (firmware state corruption)
+	if echo "$mt_dmesg" | has_match -i 'failed to insert STA entry'; then
+		local sta_err
+		sta_err="$(echo "$mt_dmesg" | grep -i 'failed to insert STA entry' | tail -1)"
+		fail "STA insertion failure (firmware corrupted, reboot required)"
+		echo "    $sta_err"
+		return
+	fi
+
+	# Critical: 4WAY_HANDSHAKE_TIMEOUT (band_idx bug)
+	if echo "$mt_dmesg" | has_match -i 'reason=15'; then
+		local reason_err
+		reason_err="$(echo "$mt_dmesg" | grep -i 'reason=15' | tail -1)"
+		fail "4WAY_HANDSHAKE_TIMEOUT (upgrade to latest package)"
+		echo "    $reason_err"
+		return
+	fi
+
+	# Look for other error patterns (exclude known benign messages)
 	local errors=""
-	errors="$(echo "$mt_dmesg" | grep -iE 'error 65539|reason=15|timeout|reset|fail' |
-		grep -ivE 'ASPM|disabling' || true)"
+	errors="$(echo "$mt_dmesg" | grep -iE 'error|timeout|reset|fail' |
+		grep -ivE 'ASPM|disabling|taint' || true)"
 
 	if [[ -z "$errors" ]]; then
 		echo "NONE"
 	else
 		local count
 		count="$(echo "$errors" | wc -l)"
+		FAIL_COUNT=$((FAIL_COUNT + 1))
 		echo "${count} error(s) found"
 		echo "$errors" | tail -5 | while IFS= read -r line; do
 			echo "    $line"
@@ -450,6 +478,15 @@ main() {
 - Data path: ${data_result}
 - Errors: ${errors_result}
 EOF
+
+	if ((FAIL_COUNT > 0)); then
+		echo ""
+		echo "RESULT: ${FAIL_COUNT} check(s) failed"
+		return 1
+	else
+		echo ""
+		echo "RESULT: ALL CHECKS PASSED"
+	fi
 }
 
 main "$@"
