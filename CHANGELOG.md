@@ -5,6 +5,29 @@ All notable changes to the MediaTek MT7927 DKMS package are documented here.
 Format: `v<pkgver>-<pkgrel>` where pkgver bumps for driver/patch changes
 and pkgrel bumps for PKGBUILD packaging changes.
 
+## [2.2-1] - 2026-03-06
+
+### Documentation
+
+- docs: Add CHANGELOG for MediaTek MT7927 DKMS package
+
+### Driver
+
+- mt7927-dkms: Add three new Tested-by tags to all WiFi patches
+- mt7927: Add 320MHz BSS RLM patch for mt7925 MCU
+
+### Other
+
+- cliff.toml: Add git-cliff changelog configuration
+- ci: Add automated release workflow on PKGBUILD changes
+
+### Packaging
+
+- PKGBUILD: Bump version to 2.2 and reset pkgrel to 1
+
+### Testing
+
+- test-driver: Add EHT/WiFi 7 capability and channel width checks
 ## [2.1-23] - 2026-03-05
 
 ### Documentation
