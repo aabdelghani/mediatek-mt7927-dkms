@@ -21,8 +21,6 @@ After the disable, mt76_pci_aspm_supported() returns false so the
 2-3 ms delay in __mt792xe_mcu_drv_pmctrl() is correctly skipped.
 The pci_disable_link_state() call persists across suspend/resume.
 
-Reported-by: cmspam (GitHub)
-Tested-by: cmspam (GitHub)
 Signed-off-by: Javier Tia <floss@jetm.me>
 Tested-by: Marcin FM <marcin@lgic.pl>
 Tested-by: Cristian-Florin Radoi <radoi.chris@gmail.com>
