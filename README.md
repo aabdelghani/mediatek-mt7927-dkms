@@ -14,10 +14,15 @@ device ID and firmware patches not yet in mainline. Distributed as an
 | WiFi (MT7925e via PCIe) | **WORKING** | 2.4/5/6 GHz, 320MHz, PM, suspend/resume |
 
 **Known issues:**
-- TX retransmissions elevated vs baseline (firmware-side, not driver-fixable)
+- TX retransmissions elevated vs baseline (firmware-side, not driver-fixable) ([#26](https://github.com/jetm/mediatek-mt7927-dkms/issues/26))
+- Bluetooth USB device may disappear after module reload or DKMS upgrade, persists
+  across reboots. Workaround: shut down, unplug PSU / switch off at back, wait 10
+  seconds, power back on. A regular reboot is not enough - the MT6639 BT firmware
+  locks up and only recovers with a full power drain.
+  ([#23](https://github.com/jetm/mediatek-mt7927-dkms/issues/23))
 
 **Recently fixed:**
-- 5/6 GHz WPA 4WAY_HANDSHAKE_TIMEOUT - fixed by explicit band_idx assignment
+- 5/6 GHz WPA 4WAY_HANDSHAKE_TIMEOUT - fixed by explicit band_idx assignment ([#24](https://github.com/jetm/mediatek-mt7927-dkms/issues/24))
 
 ## Supported hardware
 
@@ -127,17 +132,30 @@ rfkill unblock bluetooth
 ```
 
 
+**Bluetooth USB device disappeared:**
+
+The MT6639 BT firmware can lock up during module reload or DKMS upgrade, causing the
+USB device to vanish from `lsusb`. This persists across reboots and affects all OSes
+(Linux and Windows). See [#23](https://github.com/jetm/mediatek-mt7927-dkms/issues/23).
+
+Fix: shut down completely, unplug the PSU cable (or switch off at the back), wait at
+least 10 seconds, then power back on. A CMOS reset also works but is more disruptive.
+
 **DKMS not built for current kernel:**
 
 ```bash
-sudo dkms install mediatek-mt7927/2.1
+sudo dkms install mediatek-mt7927/2.3
 ```
 
 ## Upstream tracking
 
-WiFi patches under review at [#15](https://github.com/jetm/mediatek-mt7927-dkms/issues/15).
-BT patches sent to linux-bluetooth@ ([#16](https://github.com/jetm/mediatek-mt7927-dkms/issues/16)).
-See [mt76#927](https://github.com/openwrt/mt76/issues/927) for the tracking issue.
+| Submission | Status | Tracking |
+|-----------|--------|----------|
+| WiFi patches (linux-wireless@) | Under review | [#15](https://github.com/jetm/mediatek-mt7927-dkms/issues/15) |
+| BT driver patches (linux-bluetooth@) | v2 pending | [#16](https://github.com/jetm/mediatek-mt7927-dkms/issues/16) |
+| BT firmware (linux-firmware) | MR open | [#17](https://github.com/jetm/mediatek-mt7927-dkms/issues/17) |
+
+See [mt76#927](https://github.com/openwrt/mt76/issues/927) for the community tracking issue.
 
 ## Roadmap
 
@@ -148,25 +166,35 @@ merged, this package becomes unnecessary for kernels that include MT7927 support
 
 ### After the base series
 
-These are planned as follow-up patches once the 17-patch base series lands:
+These are planned as follow-up patches once the 18-patch base series lands:
 
-- **MLO (Multi-Link Operation)** - STR dual-link verified working (5GHz+2.4GHz)
-  with three targeted fixes: cfg80211 BSS flag relaxation, ROC timer extension,
-  and 5GHz/6GHz band exclusion. Firmware UMAC distributes traffic across both
-  links. Needs more testing before upstream submission.
-- **mac_reset recovery** - full DMA reinitialization on firmware crash. Has
-  unguarded paths on mt7925 standalone that need fixing first.
+- **MLO (Multi-Link Operation)** ([#25](https://github.com/jetm/mediatek-mt7927-dkms/issues/25)) -
+  STR dual-link verified working (5GHz+2.4GHz) with three targeted fixes:
+  cfg80211 BSS flag relaxation, ROC timer extension, and 5GHz/6GHz band
+  exclusion. Needs more testing before upstream submission.
+- **mac_reset recovery** ([#28](https://github.com/jetm/mediatek-mt7927-dkms/issues/28)) -
+  full DMA reinitialization on firmware crash. Has unguarded paths on
+  mt7925 standalone that need fixing first.
+- **Kernel < 6.19 compatibility** ([#27](https://github.com/jetm/mediatek-mt7927-dkms/issues/27)) -
+  backport support for older kernels (Fedora/Bazzite use case).
 
 ### Firmware dependencies
 
 These issues are firmware-controlled and cannot be fixed in the driver:
 
-- **TX retransmissions** - ~35% retry rate at 320MHz, firmware manages rate
-  adaptation and retry logic
+- **TX retransmissions** ([#26](https://github.com/jetm/mediatek-mt7927-dkms/issues/26)) -
+  ~35% retry rate at 320MHz, firmware manages rate adaptation and retry logic
+- **BT USB disappearance** ([#23](https://github.com/jetm/mediatek-mt7927-dkms/issues/23)) -
+  MT6639 BT firmware locks up during module reload, requires full power cycle
+  (PSU unplug). Affects Linux and Windows.
 - **6GHz MLO link** - passive scan and ML probe limitations prevent 6GHz
   link discovery (cfg80211/wpa_supplicant limitation)
 
 See [mt76#927](https://github.com/openwrt/mt76/issues/927) for detailed discussion.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 
 ## License
 
