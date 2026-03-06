@@ -5,6 +5,25 @@ All notable changes to the MediaTek MT7927 DKMS package are documented here.
 Format: `v<pkgver>-<pkgrel>` where pkgver bumps for driver/patch changes
 and pkgrel bumps for PKGBUILD packaging changes.
 
+## [Unreleased]
+
+### Documentation
+
+- docs: Update README with known issues, fixes, and upstream status
+- docs: Update upstream submission status in README
+
+### Driver
+
+- dkms: Add USB ID 0489:e110 to MT7927 Bluetooth device table
+
+### Other
+
+- scripts: Add automated release script for DKMS package
+- .gitignore: Add linux-stable to ignored paths
+
+### Packaging
+
+- pkg: Distro-agnostic build system and bump to v2.4-1
 ## [2.3-1] - 2026-03-06
 
 ### Driver
@@ -16,6 +35,7 @@ and pkgrel bumps for PKGBUILD packaging changes.
 ### Other
 
 - gitignore: Exclude .github/ (GitHub-only, AUR rejects subdirectories)
+- CHANGELOG: Reorganize entries into reverse-chronological order
 ## [2.2-1] - 2026-03-06
 
 ### Documentation
