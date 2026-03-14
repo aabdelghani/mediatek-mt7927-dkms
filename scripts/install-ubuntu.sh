@@ -13,7 +13,7 @@ set -euo pipefail
 
 DKMS_VERSION="2.4"
 DKMS_NAME="mediatek-mt7927"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KVER="$(uname -r)"
 KBUILD="/lib/modules/${KVER}/build"
 

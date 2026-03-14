@@ -93,7 +93,7 @@ makepkg -si
 ```bash
 git clone https://github.com/jetm/mediatek-mt7927-dkms.git
 cd mediatek-mt7927-dkms
-sudo ./install-ubuntu.sh
+sudo ./scripts/install-ubuntu.sh
 ```
 
 The script handles prerequisites, the airoha stub header, DKMS build/install, and
@@ -179,16 +179,16 @@ Or just reboot.
 Quick validation (<30 seconds, non-destructive):
 
 ```bash
-./test-driver.sh              # auto-detect interface
-./test-driver.sh wlp9s0       # specify interface
+./scripts/test-driver.sh              # auto-detect interface
+./scripts/test-driver.sh wlp9s0       # specify interface
 ```
 
 Long-running stability monitor (8 hours default):
 
 ```bash
-./stability-test.sh                   # 8-hour test, auto-detect
-./stability-test.sh -d 2h             # 2-hour test
-./stability-test.sh -s 192.168.1.50   # with iperf3 server
+./scripts/stability-test.sh                   # 8-hour test, auto-detect
+./scripts/stability-test.sh -d 2h             # 2-hour test
+./scripts/stability-test.sh -s 192.168.1.50   # with iperf3 server
 ```
 
 ## Troubleshooting

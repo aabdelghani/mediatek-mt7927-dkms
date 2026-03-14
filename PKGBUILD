@@ -78,7 +78,7 @@ sha256sums=('4d9f3ff73214f68c0194ef02db9ca4b7ba713253ac1045441d4e9f352bc22e14'
 
 # Auto-download via ASUS CDN token API
 _download_driver_zip() {
-  DRIVER_FILENAME="${_driver_filename}" "${startdir}/download-driver.sh" "${SRCDEST:-.}"
+  DRIVER_FILENAME="${_driver_filename}" "${startdir}/scripts/download-driver.sh" "${SRCDEST:-.}"
 }
 
 prepare() {

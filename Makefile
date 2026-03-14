@@ -24,7 +24,7 @@ download:
 	else \
 		echo "Kernel tarball already exists: $(KERNEL_TARBALL)"; \
 	fi
-	@$(TOPDIR)download-driver.sh .
+	@$(TOPDIR)scripts/download-driver.sh .
 
 # ── sources ─────────────────────────────────────────────────────────
 sources: $(STAMP)
@@ -45,7 +45,7 @@ $(STAMP):
 	fi
 	@echo "==> Extracting firmware from driver ZIP..."
 	mkdir -p "$(SRCDIR)/firmware"
-	$(PYTHON) "$(TOPDIR)extract_firmware.py" "$(DRIVER_ZIP)" "$(SRCDIR)/firmware"
+	$(PYTHON) "$(TOPDIR)scripts/extract_firmware.py" "$(DRIVER_ZIP)" "$(SRCDIR)/firmware"
 	@echo "==> Extracting mt76 source from kernel v$(MT76_KVER) tarball..."
 	mkdir -p "$(SRCDIR)/mt76"
 	tar -xf "$(KERNEL_TARBALL)" \
@@ -59,19 +59,19 @@ $(STAMP):
 		-C "$(SRCDIR)/bluetooth" \
 		"linux-$(MT76_KVER)/drivers/bluetooth"
 	@echo "==> Applying mt7902-wifi-6.19.patch..."
-	patch -d "$(SRCDIR)/mt76" -p1 < "$(TOPDIR)mt7902-wifi-6.19.patch"
+	patch -d "$(SRCDIR)/mt76" -p1 < "$(TOPDIR)patches/wifi/mt7902-wifi-6.19.patch"
 	@echo "==> Applying MT7927 WiFi patches..."
-	@for p in $(TOPDIR)mt7927-wifi-*.patch; do \
+	@for p in $(TOPDIR)patches/wifi/mt7927-wifi-*.patch; do \
 		echo "  $$(basename "$$p")"; \
 		patch -d "$(SRCDIR)/mt76" -p1 < "$$p"; \
 	done
 	@echo "==> Applying MT6639 Bluetooth patch..."
-	patch -d "$(SRCDIR)/bluetooth" -p3 < "$(TOPDIR)mt6639-bt-6.19.patch"
-	cp "$(TOPDIR)bluetooth.Makefile" "$(SRCDIR)/bluetooth/Makefile"
+	patch -d "$(SRCDIR)/bluetooth" -p3 < "$(TOPDIR)patches/bt/mt6639-bt-6.19.patch"
+	cp "$(TOPDIR)kbuild/bluetooth.Makefile" "$(SRCDIR)/bluetooth/Makefile"
 	@echo "==> Installing Kbuild files..."
-	cp "$(TOPDIR)mt76.Kbuild"      "$(SRCDIR)/mt76/Kbuild"
-	cp "$(TOPDIR)mt7921.Kbuild"    "$(SRCDIR)/mt76/mt7921/Kbuild"
-	cp "$(TOPDIR)mt7925.Kbuild"    "$(SRCDIR)/mt76/mt7925/Kbuild"
+	cp "$(TOPDIR)kbuild/mt76.Kbuild"      "$(SRCDIR)/mt76/Kbuild"
+	cp "$(TOPDIR)kbuild/mt7921.Kbuild"    "$(SRCDIR)/mt76/mt7921/Kbuild"
+	cp "$(TOPDIR)kbuild/mt7925.Kbuild"    "$(SRCDIR)/mt76/mt7925/Kbuild"
 	@echo "==> Sources ready in $(SRCDIR)/"
 	@touch "$(STAMP)"
 
@@ -79,7 +79,7 @@ $(STAMP):
 install: sources
 	@echo "==> Installing DKMS source tree to $(DESTDIR)$(DKMS_PREFIX)..."
 	install -Dm644 "$(TOPDIR)dkms.conf"          "$(DESTDIR)$(DKMS_PREFIX)/dkms.conf"
-	install -Dm755 "$(TOPDIR)extract_firmware.py" "$(DESTDIR)$(DKMS_PREFIX)/extract_firmware.py"
+	install -Dm755 "$(TOPDIR)scripts/extract_firmware.py" "$(DESTDIR)$(DKMS_PREFIX)/extract_firmware.py"
 	# Bluetooth source for DKMS btusb builds
 	install -dm755 "$(DESTDIR)$(DKMS_PREFIX)/drivers/bluetooth"
 	install -m644 $(SRCDIR)/bluetooth/btusb.c  "$(DESTDIR)$(DKMS_PREFIX)/drivers/bluetooth/"
@@ -113,9 +113,9 @@ install: sources
 	# Patch files (reference copies)
 	install -dm755 "$(DESTDIR)$(DKMS_PREFIX)/patches/bt"
 	install -dm755 "$(DESTDIR)$(DKMS_PREFIX)/patches/wifi"
-	install -m644 "$(TOPDIR)mt6639-bt-6.19.patch" "$(DESTDIR)$(DKMS_PREFIX)/patches/bt/"
-	install -m644 "$(TOPDIR)mt7902-wifi-6.19.patch" "$(DESTDIR)$(DKMS_PREFIX)/patches/wifi/"
-	install -m644 $(TOPDIR)mt7927-wifi-*.patch "$(DESTDIR)$(DKMS_PREFIX)/patches/wifi/"
+	install -m644 "$(TOPDIR)patches/bt/mt6639-bt-6.19.patch" "$(DESTDIR)$(DKMS_PREFIX)/patches/bt/"
+	install -m644 "$(TOPDIR)patches/wifi/mt7902-wifi-6.19.patch" "$(DESTDIR)$(DKMS_PREFIX)/patches/wifi/"
+	install -m644 $(TOPDIR)patches/wifi/mt7927-wifi-*.patch "$(DESTDIR)$(DKMS_PREFIX)/patches/wifi/"
 	@echo "==> Install complete."
 
 # ── clean ───────────────────────────────────────────────────────────
