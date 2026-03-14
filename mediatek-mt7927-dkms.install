@@ -1,10 +1,25 @@
 _pkgname=mediatek-mt7927
 _pkgver=2.4
 
-# Install/upgrade: handled by pacman's built-in DKMS hooks (70-dkms-install.hook,
-# 70-dkms-upgrade.hook) which automatically add, build, and install modules for
-# all kernels with headers present - skipping kernels without headers.
+post_install() {
+  echo ">>> MediaTek MT7927 DKMS driver installed."
+  echo ">>> Reload modules or reboot to activate:"
+  echo ">>>   sudo modprobe -r mt7925e mt7921e btusb"
+  echo ">>>   sudo modprobe mt7925e btusb"
+}
+
+post_upgrade() {
+  echo ">>> MediaTek MT7927 DKMS driver upgraded."
+  echo ">>> Reload modules or reboot to activate:"
+  echo ">>>   sudo modprobe -r mt7925e mt7921e btusb"
+  echo ">>>   sudo modprobe mt7925e btusb"
+}
 
 pre_remove() {
   dkms remove "${_pkgname}/${_pkgver}" --all || true
+}
+
+post_remove() {
+  echo ">>> MediaTek MT7927 DKMS driver removed."
+  echo ">>> Reboot to restore stock kernel modules."
 }
