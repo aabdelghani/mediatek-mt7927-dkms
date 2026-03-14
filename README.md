@@ -88,6 +88,81 @@ makepkg -si
 - **Ubuntu:** [giosal/mediatek-mt7927-dkms](https://github.com/giosal/mediatek-mt7927-dkms)
 - **Bazzite (Fedora Atomic):** [samutoljamo/bazzite-mt7927](https://github.com/samutoljamo/bazzite-mt7927)
 
+### Ubuntu (kernel < 6.19) — automated script
+
+```bash
+git clone https://github.com/jetm/mediatek-mt7927-dkms.git
+cd mediatek-mt7927-dkms
+sudo ./install-ubuntu.sh
+```
+
+The script handles prerequisites, the airoha stub header, DKMS build/install, and
+module reload automatically. See below for manual steps if you prefer.
+
+### Manual install on Ubuntu (kernel < 6.19)
+
+The mt76 source is extracted from kernel 6.19.6. On Ubuntu 24.04 HWE (kernel 6.17),
+the build fails because `linux/soc/airoha/airoha_offload.h` doesn't exist yet.
+Fix by creating a stub header before building:
+
+```bash
+# 1. Install prerequisites
+sudo apt install dkms linux-headers-$(uname -r)
+
+# 2. Create /var/lib/dkms if it doesn't exist
+sudo mkdir -p /var/lib/dkms
+
+# 3. Download sources and firmware
+git clone https://github.com/jetm/mediatek-mt7927-dkms.git
+cd mediatek-mt7927-dkms
+make download
+make sources
+
+# 4. Create stub airoha_offload.h (only needed for kernel < 6.19)
+sudo mkdir -p /lib/modules/$(uname -r)/build/include/linux/soc/airoha
+sudo tee /lib/modules/$(uname -r)/build/include/linux/soc/airoha/airoha_offload.h > /dev/null << 'EOF'
+#ifndef _AIROHA_OFFLOAD_H
+#define _AIROHA_OFFLOAD_H
+#include <linux/types.h>
+#include <linux/gfp.h>
+#include <linux/skbuff.h>
+struct airoha_ppe_dev;
+struct airoha_npu;
+enum airoha_npu_wlan_set_cmd { __AIROHA_NPU_WLAN_SET_DUMMY };
+enum airoha_npu_wlan_get_cmd { __AIROHA_NPU_WLAN_GET_DUMMY };
+struct airoha_npu_tx_dma_desc { __le32 d[8]; };
+struct airoha_npu_rx_dma_desc { __le32 d[8]; };
+static inline int airoha_npu_wlan_send_msg(struct airoha_npu *npu, int ifindex,
+    enum airoha_npu_wlan_set_cmd cmd, void *val, int len, gfp_t gfp)
+{ return -EOPNOTSUPP; }
+static inline int airoha_npu_wlan_get_msg(struct airoha_npu *npu, int ifindex,
+    enum airoha_npu_wlan_get_cmd cmd, void *val, int len, gfp_t gfp)
+{ return -EOPNOTSUPP; }
+static inline int airoha_npu_wlan_get_irq_status(struct airoha_npu *npu, int index)
+{ return 0; }
+static inline void airoha_npu_wlan_set_irq_status(struct airoha_npu *npu, int status) {}
+static inline void airoha_npu_wlan_disable_irq(struct airoha_npu *npu, int index) {}
+static inline bool airoha_ppe_dev_check_skb(struct airoha_ppe_dev *dev,
+    struct sk_buff *skb, u32 hash, bool flag) { return false; }
+#endif
+EOF
+
+# 5. Install, build, and load
+sudo make install
+sudo dkms add mediatek-mt7927/2.4
+sudo dkms build mediatek-mt7927/2.4
+sudo dkms install mediatek-mt7927/2.4
+
+# 6. Unload old mt76 modules first, then load new ones
+sudo modprobe -r mt7921u mt792x_usb mt7921e mt7921_common mt7925e mt7925_common \
+    mt792x_lib mt76_connac_lib mt76_usb mt76 btusb btmtk 2>/dev/null
+sudo modprobe mt7925e btusb
+```
+
+**Note:** If `modprobe mt7925e` fails with "disagrees about version of symbol", old
+in-kernel mt76 modules are still loaded. Unload the entire mt76 stack (see step 6)
+or reboot.
+
 ## Post-install
 
 Reload kernel modules to pick up new builds without rebooting:
